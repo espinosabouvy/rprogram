@@ -23,40 +23,31 @@ rankall <- function(outcome, num ="best"){
      
      
      #reading and prep file
-     datos <- read.csv("outcome-of-care-measures.csv", colClasses = "character")[c(2,7,disease[outcome])]
-     colnames(datos) <- c("Hospital", "State", "Rate")
-     datos[,3]<- suppressWarnings(as.numeric(datos[,3]))
-     #order
-     datos <- datos[order(datos[,1]),]
-     datos <- datos[order(datos[,3], decreasing = TRUE),]
-     datos <- datos[order(datos[,2]),]
+     datos <- read.csv("outcome-of-care-measures.csv", colClasses = "character", na.strings = "Not Available"
+                       , stringsAsFactors = FALSE)[c(2,7,disease[outcome])]
+     colnames(datos) <- c("hospital", "state", "rate")
+     datos <- datos[!is.na(datos$rate),]
      
-     #assign ranking+
-     ranking <- NULL
-     rankk <- 1
-     edo <- datos[1,2]
-     for (i in 1:nrow(datos)){
-          #when state change
-          if (datos[i,2] != edo){
-               rankk<- 1
-               edo <- datos[i,2]
-          }
-          #creating vector
-          if(is.na(datos[i,3])){
-               ranking[i]= NA
+     #order
+     if(is.numeric(num)){
+          rank <- num
+          datos <- datos[order(datos$state, as.numeric(datos$rate), datos$hospital),]
+     } else {
+          if (num == "best") {
+               rank <- 1
+               datos <- datos[order(datos$state, as.numeric(datos$rate), datos$hospital),]
           } else {
-               ranking[i] <- rankk
-               rankk = rankk+1
+               if (num == "worst"){
+                    rank <- 1
+                    datos <- datos[order(datos$state, -as.numeric(datos$rate), datos$hospital),]     
+               } else {stop("outcome invalid",call. = FALSE)}
           }
      }
-     datos["Rank"] <- ranking
-     head(datos,50)
-     
-     if(num =="best"){Rank <- 1} else {Rank <- num}
 
+     #split in state groups, and extracting row(rank) of each group, create data frame
      result <- NULL
-     best <- split(datos, datos$State)
-     tabla <- sapply(best, function(x){x[[1]][Rank]})
-     result <- data.frame("Hospital" = tabla,"State" = names(tabla))
+     best <- split(datos, datos$state)
+     tabla <- sapply(best, function(x){x[[1]][rank]})
+     result <- data.frame("hospital" = tabla,"state" = names(tabla))
      #print(result)
 }
