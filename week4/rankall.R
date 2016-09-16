@@ -12,13 +12,18 @@ rankall <- function(outcome, num ="best"){
      #verfiy outcome and assign column name acoordingly
      if (outcome != "heart attack" && outcome!="heart failure" && outcome !="pneumonia"){
           stop("invalid outcome", call. = FALSE)
-     } 
-     if (outcome == "heart attack") {disease <- 11}
-     if (outcome == "heart failure"){disease <- 17}
-     if (outcome == "pneumonia") {disease <- 23}
+     }
+     
+     #used before checking the forum
+     #if (outcome == "heart attack") {disease <- 11}
+     #if (outcome == "heart failure"){disease <- 17}
+     #if (outcome == "pneumonia") {disease <- 23}
+     #much better
+     disease <- c("heart attack" = 11, "heart failure" = 17, "pneumonia"=23)
+     
      
      #reading and prep file
-     datos <- read.csv("outcome-of-care-measures.csv", colClasses = "character")[c(2,7,disease)]
+     datos <- read.csv("outcome-of-care-measures.csv", colClasses = "character")[c(2,7,disease[outcome])]
      colnames(datos) <- c("Hospital", "State", "Rate")
      datos[,3]<- suppressWarnings(as.numeric(datos[,3]))
      #order
@@ -47,10 +52,11 @@ rankall <- function(outcome, num ="best"){
      datos["Rank"] <- ranking
      head(datos,50)
      
-     if(num=="best"){
-          best <- datos[datos$Rank == ranking,]
-          best <- best[!is.na(best$Rank),c(1,2)]
-          print(best)
-     }
-     
+     if(num =="best"){Rank <- 1} else {Rank <- num}
+
+     result <- NULL
+     best <- split(datos, datos$State)
+     tabla <- sapply(best, function(x){x[[1]][Rank]})
+     result <- data.frame("Hospital" = tabla,"State" = names(tabla))
+     #print(result)
 }
